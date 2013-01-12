@@ -7,6 +7,10 @@
 // Img - должен быть position-absolute;
 //
 
+// TODO: Определять высоту и ширину картинки.
+// TODO: Реализовать поддержку свойства background-size: 100% при переданном параметре и если браузер поддерживает данное свойство.
+
+
 (function($){
 	jQuery.fn.niceBackground = function(){
 		var items = $(this);
@@ -18,6 +22,8 @@
 			var imgHeight = parseInt(img.attr('height'));
 			var imgRatio = imgWidth / imgHeight; // Брать из атрибутов.
 			var offset;
+
+			img.css('position', 'absolute');
 
 			$(window).resize(function() {
 				var ratio = itemWrap.width() / itemWrap.height();
