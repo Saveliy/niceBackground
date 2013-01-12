@@ -16,48 +16,97 @@
 		var items = $(this);
 
 		items.each(function() {
+
+			/**
+			 * Подписываемся на событие ресайза.
+			 * Subscribe to event resize.
+			 */
+			var initResize = function() {
+				var imgRatio = imgWidth / imgHeight;
+				var offset;
+
+				img.css('position', 'absolute');
+
+				$(window).resize(function() {
+					var ratio = itemWrap.width() / itemWrap.height();
+
+					if (imgRatio > ratio) {
+						var wrapHeight = ~~ itemWrap.height();
+						var newImgWidth = ~~ (wrapHeight * imgRatio);
+						img.height(wrapHeight);
+						img.width(newImgWidth);
+						offset = ~~ (itemWrap.width() / 2 - newImgWidth / 2);
+
+						if (offset < 0)
+							offset = offset * -1;
+
+						img.css({
+							'left': - offset + 'px',
+							'top': 0 + 'px'
+						});
+					} else {
+						var wrapWidth = ~~ itemWrap.width();
+						var newImgHeight = ~~ (wrapWidth / imgRatio);
+						img.width(wrapWidth);
+						img.height(newImgHeight);
+						offset = ~~ (itemWrap.height() / 2 - newImgHeight / 2);
+
+						if (offset < 0)
+							offset = offset * -1;
+
+						img.css({
+							'top': - offset + 'px',
+							'left': 0 + 'px'
+						});
+					}
+				});
+			};
+
 			var itemWrap = $(this);
 			var img = itemWrap.find('img');
 			var imgWidth = parseInt(img.attr('width'));
 			var imgHeight = parseInt(img.attr('height'));
-			var imgRatio = imgWidth / imgHeight; // Брать из атрибутов.
-			var offset;
 
-			img.css('position', 'absolute');
+			console.log(imgWidth, imgHeight);
 
-			$(window).resize(function() {
-				var ratio = itemWrap.width() / itemWrap.height();
+			/**
+			 * Обработаем событие, если не указаны аттрибуты.
+			 * Processing the event, if image attributes do not specified.
+			 */
 
-				if (imgRatio > ratio) {
-					var wrapHeight = ~~ itemWrap.height();
-					var newImgWidth = ~~ (wrapHeight * imgRatio);
-					img.height(wrapHeight);
-					img.width(newImgWidth);
-					offset = ~~ (itemWrap.width() / 2 - newImgWidth / 2);
+			if (isNaN(imgWidth) || isNaN(imgHeight)) {
+				var surveyImgHeight = function() {
+					imgHeight = img.height();
 
-					if (offset < 0)
-						offset = offset * -1;
+					if (imgHeight == 0) {
+						setTimeout(function() {
+							surveyImgHeight();
+						}, 100);
+					}
+					else {console.log(imgWidth, imgHeight);
+						initResize();
+					}
+				};
 
-					img.css({
-						'left': - offset + 'px',
-						'top': 0 + 'px'
-					});
-				} else {
-					var wrapWidth = ~~ itemWrap.width();
-					var newImgHeight = ~~ (wrapWidth / imgRatio);
-					img.width(wrapWidth);
-					img.height(newImgHeight);
-					offset = ~~ (itemWrap.height() / 2 - newImgHeight / 2);
+				var surveyImgWidth = function() {
+					imgWidth = img.width();
 
-					if (offset < 0)
-						offset = offset * -1;
+					if (imgWidth == 0) {
+						setTimeout(function() {
+							surveyImgWidth(img);
+						}, 100);
+					}
+					else {console.log(imgWidth, imgHeight);
+						initResize();
+					}
+				};
 
-					img.css({
-						'top': - offset + 'px',
-						'left': 0 + 'px'
-					});
-				}
-			});
+				surveyImgHeight();
+				surveyImgWidth();
+
+			} else {
+				initResize();
+			}
 		});
 
 		return items;
