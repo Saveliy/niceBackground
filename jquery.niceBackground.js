@@ -29,11 +29,11 @@
 				var ratio = itemWrap.width() / itemWrap.height();
 
 				if (imgRatio > ratio) {
-					var wrapHeight = itemWrap.height();
-					var newImgWidth = wrapHeight * imgRatio;
+					var wrapHeight = ~~ itemWrap.height();
+					var newImgWidth = ~~ (wrapHeight * imgRatio);
 					img.height(wrapHeight);
 					img.width(newImgWidth);
-					offset = itemWrap.width() / 2 - newImgWidth / 2;
+					offset = ~~ (itemWrap.width() / 2 - newImgWidth / 2);
 
 					if (offset < 0)
 						offset = offset * -1;
@@ -43,15 +43,14 @@
 						'top': 0 + 'px'
 					});
 				} else {
-					var wrapWidth = itemWrap.width();
-					var newImgHeight = wrapWidth / imgRatio;
+					var wrapWidth = ~~ itemWrap.width();
+					var newImgHeight = ~~ (wrapWidth / imgRatio);
 					img.width(wrapWidth);
 					img.height(newImgHeight);
-					offset = itemWrap.height() / 2 - newImgHeight / 2;
+					offset = ~~ (itemWrap.height() / 2 - newImgHeight / 2);
 
 					if (offset < 0)
 						offset = offset * -1;
-
 
 					img.css({
 						'top': - offset + 'px',
