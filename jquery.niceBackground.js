@@ -3,11 +3,9 @@
  * @date: 12.01.13, 23:21
  */
 
-// В атрибутах картинки должны быть указанны width и height.
-// Img - должен быть position-absolute;
-//
+// Если не указаны ширина и высота в атрибутах картинки, это может замедлить работу плагина.
 
-// TODO: Определять высоту и ширину картинки.
+
 // TODO: Реализовать поддержку свойства background-size: 100% при переданном параметре и если браузер поддерживает данное свойство.
 
 
@@ -67,43 +65,26 @@
 			var imgWidth = parseInt(img.attr('width'));
 			var imgHeight = parseInt(img.attr('height'));
 
-			console.log(imgWidth, imgHeight);
-
 			/**
 			 * Обработаем событие, если не указаны аттрибуты.
 			 * Processing the event, if image attributes do not specified.
 			 */
 
 			if (isNaN(imgWidth) || isNaN(imgHeight)) {
-				var surveyImgHeight = function() {
+				var surveyImgSize = function() {
 					imgHeight = img.height();
-
-					if (imgHeight == 0) {
-						setTimeout(function() {
-							surveyImgHeight();
-						}, 100);
-					}
-					else {console.log(imgWidth, imgHeight);
-						initResize();
-					}
-				};
-
-				var surveyImgWidth = function() {
 					imgWidth = img.width();
 
-					if (imgWidth == 0) {
+					if (imgHeight == 0 || imgWidth == 0) {
 						setTimeout(function() {
-							surveyImgWidth(img);
+							surveyImgSize();
 						}, 100);
-					}
-					else {console.log(imgWidth, imgHeight);
+					} else {
 						initResize();
 					}
 				};
 
-				surveyImgHeight();
-				surveyImgWidth();
-
+				surveyImgSize();
 			} else {
 				initResize();
 			}
