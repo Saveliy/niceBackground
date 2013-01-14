@@ -4,14 +4,13 @@
  */
 
 // Если не указаны ширина и высота в атрибутах картинки, это может замедлить работу плагина.
+// Для коректной работы необходима сборка modernizer с определением поддержки background-size и transform.
 
 // TODO: Исправить глюки в IE7-IE8. Доработать обработку ресайза. Сделать рефакторинг кода.
-// TODO: Объеденить в один блок обработку события ресайза.
-// TODO: Реализовать поддержку свойства background-size: 100% при переданном параметре и если браузер поддерживает данное свойство.
-
 
 (function($){
 	jQuery.fn.niceBackground = function(params){
+		var Modernizr = Modernizr || {};
 		var items = $(this);
 		var params = params || {};
 		var resizeObject = $(window);
@@ -20,34 +19,52 @@
 			resizeObject = items;
 
 		items.each(function() {
-			var item = $(this);
+			var itemWrap = $(this);
+			var height = itemWrap.height();
+			var width = itemWrap.width();
+
+			var img = itemWrap.find('img');
+			var imgWidth = parseInt(img.attr('width'));
+			var imgHeight = parseInt(img.attr('height'));
+
+
+//			Если передан параметр background проверим поддерживает ли браузер свойство background-size.
+
+			if (params.background && Modernizr.backgroundsize) {
+				var url = img.attr('src');
+				itemWrap.css({
+					background: 'url(' + url + ') no-repeat',
+					backgroundSize: 'cover'
+				});
+				img.remove();
+				return true;
+			}
 
 //			Установим свой излучатель события изменения размера.
 
-			var height = item.height();
-			var width = item.width();
+			if (params.resize && params.resize == 'item') {
+				var emitter = function() {
+					var newWidth = itemWrap.width();
+					var newHeight = itemWrap.height();
 
-			var emitter = function() {
-				var newWidth = item.width();
-				var newHeight = item.height();
+					if (newHeight != height || newWidth != width) {
+						height = newHeight;
+						width = newWidth;
 
-				if (newHeight != height || newWidth != width) {
-					height = newHeight;
-					width = newWidth;
+						itemWrap.trigger({
+							type: 'resize',
+							height: height,
+							width: width
+						});
+					}
 
-					item.trigger({
-						type: 'resize',
-						height: height,
-						width: width
-					});
+					setTimeout(function() {
+						emitter();
+					}, 40)
 				}
 
-				setTimeout(function() {
-					emitter();
-				}, 40)
+				emitter();
 			}
-
-			emitter();
 
 			/**
 			 * Подписываемся на событие ресайза.
@@ -60,65 +77,51 @@
 				img.css('position', 'absolute');
 
 				resizeObject.resize(function(e) {
-					if (params.resize && params.resize == 'item') {
-						var ratio = e.width / e.height;
+					var itemWrapHeight = e.height || itemWrap.height();
+					var itemWrapWidth = e.width || itemWrap.width();
 
-						if (imgRatio > ratio) {
-							var wrapHeight = ~~ e.height;
-							var newImgWidth = ~~ (wrapHeight * imgRatio);
-							img.height(wrapHeight);
-							img.width(newImgWidth);
-							offset = ~~ (e.width / 2 - newImgWidth / 2);
+					var ratio = itemWrapWidth /itemWrapHeight;
 
-							if (offset < 0)
-								offset = offset * -1;
+					if (imgRatio > ratio) {
+						var wrapHeight = itemWrapHeight;
+						var newImgWidth = ~~ (wrapHeight * imgRatio);
 
+						img.height(wrapHeight);
+						img.width(newImgWidth);
+
+						offset = ~~ (itemWrapWidth / 2 - newImgWidth / 2);
+
+						if (offset < 0)
+							offset = offset * -1;
+
+						if (Modernizr.csstransforms) {
+							img.css({
+								transform: 'translate(-' +  offset + 'px , 0px)'
+							});
+						} else {
 							img.css({
 								'left': - offset + 'px',
 								'top': 0 + 'px'
-							});
-						} else {
-							var wrapWidth = ~~ e.width;
-							var newImgHeight = ~~ (wrapWidth / imgRatio);
-							img.width(wrapWidth);
-							img.height(newImgHeight);
-							offset = ~~ (e.height / 2 - newImgHeight / 2);
-
-							if (offset < 0)
-								offset = offset * -1;
-
-							img.css({
-								'top': - offset + 'px',
-								'left': 0 + 'px'
 							});
 						}
+
 					} else {
-						var ratio = itemWrap.width() / itemWrap.height();
+						var wrapWidth = itemWrapWidth;
+						var newImgHeight = ~~ (wrapWidth / imgRatio);
 
-						if (imgRatio > ratio) {
-							var wrapHeight = ~~ itemWrap.height();
-							var newImgWidth = ~~ (wrapHeight * imgRatio);
-							img.height(wrapHeight);
-							img.width(newImgWidth);
-							offset = ~~ (itemWrap.width() / 2 - newImgWidth / 2);
+						img.width(wrapWidth);
+						img.height(newImgHeight);
 
-							if (offset < 0)
-								offset = offset * -1;
+						offset = ~~ (itemWrapHeight / 2 - newImgHeight / 2);
 
+						if (offset < 0)
+							offset = offset * -1;
+
+						if (Modernizr.csstransforms) {
 							img.css({
-								'left': - offset + 'px',
-								'top': 0 + 'px'
+								transform: 'translate(0px , -' + offset + 'px)'
 							});
 						} else {
-							var wrapWidth = ~~ itemWrap.width();
-							var newImgHeight = ~~ (wrapWidth / imgRatio);
-							img.width(wrapWidth);
-							img.height(newImgHeight);
-							offset = ~~ (itemWrap.height() / 2 - newImgHeight / 2);
-
-							if (offset < 0)
-								offset = offset * -1;
-
 							img.css({
 								'top': - offset + 'px',
 								'left': 0 + 'px'
@@ -127,11 +130,6 @@
 					}
 				});
 			};
-
-			var itemWrap = $(this);
-			var img = itemWrap.find('img');
-			var imgWidth = parseInt(img.attr('width'));
-			var imgHeight = parseInt(img.attr('height'));
 
 			/**
 			 * Обработаем событие, если не указаны аттрибуты.
